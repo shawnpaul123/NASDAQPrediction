@@ -3,7 +3,7 @@
 #create your class of visualizations
 #save & sns  for images
 # drop all rows with nans
-#
+# review and learn pyspart
 
 import logging
 from numba import jit

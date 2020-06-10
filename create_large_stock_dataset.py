@@ -29,8 +29,15 @@ import download_all_dataframes
 ##parralize normalization by applying function to pandas
 ##create tech indicators
 
+import time
+import logging
 
-logging.basicConfig(level=logging.INFO)
+LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
+logging.basicConfig(filename = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\test_logs\create_large_dataset.log",level = logging.DEBUG, format =LOG_FORMAT)
+logger = logging.getLogger()#root logger
+
+
+
 
 
 
@@ -68,7 +75,7 @@ def clean_final_df_cols(df1,syms):
 
 def read_pq(sym):
 
-    path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\Stock_Data\{}.parquet".format(sym)
+    path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\Stock_Data\{}.parquet".format(sym)
     df = pd.read_parquet(path)    
 
     return df
@@ -99,14 +106,15 @@ def main_create_giga_ds(URL):
             df = read_pq(sym)
             df =  dd.from_pandas(df, npartitions=3)
             old_df = dd.merge_asof(old_df, df , left_index=True, right_index=True)
-            if i == 3:
-                pass
-    
-            i = i+1
+            
 
 
     old_df.compute()
     df = clean_final_df_cols(old_df,syms)
+    assert len(df.columns) == 200 , "columns have not been dropped"
+    print(df.head(5))
+    logger.info("Number of columns")
+    logger.info(len(df.columns))
     df.to_parquet('old_df.parquet')
  
 
@@ -114,6 +122,7 @@ def main_create_giga_ds(URL):
 
 
 main_create_giga_ds(r"https://en.wikipedia.org/wiki/NASDAQ-100")
+logger.info("This works")
 
 
 

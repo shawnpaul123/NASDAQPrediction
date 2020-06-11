@@ -44,7 +44,8 @@ class create_and_plot_indicators:
         self.fourier = "fft"
         self.price_col = 'Close'
         self.freq = 35
-        self.old_df_path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\old_df.parquet"
+        self.old_df_path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\stored_data\old_df.parquet"
+        self.data_path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\stored_data"
         
     def read_stock(self):
         #reads single dataframe
@@ -91,7 +92,16 @@ class create_and_plot_indicators:
         path = self.old_df_path
         df = pd.read_parquet(path,engine = 'pyarrow')
         print(df.head(5))
+    
 
+    def EDA_old_df(self):
+        #return 
+        pass
+
+
+    def clean_missing data(self):
+        #interpolate cubically forward:https://pandas.pydata.org/pandas-docs/stable/user_guide/missing_data.html#filling-missing-values-fillna
+        #return a csv that has the starting data of each column
 
    
 

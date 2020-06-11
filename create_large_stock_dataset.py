@@ -86,6 +86,7 @@ def read_pq(sym):
 def main_create_giga_ds(URL):
 
     syms = download_all_dataframes.return_dictonaries_of_stock_tickers(URL)
+    
     syms = list(syms.values())
     i = 0
 
@@ -95,6 +96,8 @@ def main_create_giga_ds(URL):
 
         if i == 0:
             df = read_pq(sym)
+            logger.info("ticker")
+            logger.info(sym)
             df =  dd.from_pandas(df, npartitions=3)
             old_df = df
     
@@ -109,13 +112,17 @@ def main_create_giga_ds(URL):
             
 
 
-    old_df.compute()
+    
     df = clean_final_df_cols(old_df,syms)
     assert len(df.columns) == 200 , "columns have not been dropped"
-    print(df.head(5))
+
     logger.info("Number of columns")
     logger.info(len(df.columns))
-    df.to_parquet('old_df.parquet')
+    df = df.apply(pd.to_numeric, axis = 1, errors='coerce')
+    
+    df = df.compute()
+    print(df.head(6))
+    df.to_parquet(r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\stored_data", engine='pyarrow')
  
 
 

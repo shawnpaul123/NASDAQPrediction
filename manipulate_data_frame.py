@@ -99,9 +99,10 @@ class create_and_plot_indicators:
         pass
 
 
-    def clean_missing data(self):
+    def clean_missing_data(self):
         #interpolate cubically forward:https://pandas.pydata.org/pandas-docs/stable/user_guide/missing_data.html#filling-missing-values-fillna
         #return a csv that has the starting data of each column
+        pass
 
    
 

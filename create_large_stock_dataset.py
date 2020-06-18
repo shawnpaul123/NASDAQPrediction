@@ -29,8 +29,15 @@ import download_all_dataframes
 ##parralize normalization by applying function to pandas
 ##create tech indicators
 
+import time
+import logging
 
-logging.basicConfig(level=logging.INFO)
+LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
+logging.basicConfig(filename = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\test_logs\create_large_dataset.log",level = logging.DEBUG, format =LOG_FORMAT)
+logger = logging.getLogger()#root logger
+
+
+
 
 
 
@@ -68,7 +75,7 @@ def clean_final_df_cols(df1,syms):
 
 def read_pq(sym):
 
-    path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\Stock_Data\{}.parquet".format(sym)
+    path = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\Stock_Data\{}.parquet".format(sym)
     df = pd.read_parquet(path)    
 
     return df
@@ -79,6 +86,7 @@ def read_pq(sym):
 def main_create_giga_ds(URL):
 
     syms = download_all_dataframes.return_dictonaries_of_stock_tickers(URL)
+    
     syms = list(syms.values())
     i = 0
 
@@ -88,6 +96,8 @@ def main_create_giga_ds(URL):
 
         if i == 0:
             df = read_pq(sym)
+            logger.info("ticker")
+            logger.info(sym)
             df =  dd.from_pandas(df, npartitions=3)
             old_df = df
     
@@ -99,21 +109,27 @@ def main_create_giga_ds(URL):
             df = read_pq(sym)
             df =  dd.from_pandas(df, npartitions=3)
             old_df = dd.merge_asof(old_df, df , left_index=True, right_index=True)
-            if i == 3:
-                pass
+            
+
+
     
-            i = i+1
-
-
-    old_df.compute()
     df = clean_final_df_cols(old_df,syms)
-    df.to_parquet('old_df.parquet')
+    assert len(df.columns) == 200 , "columns have not been dropped"
+
+    logger.info("Number of columns")
+    logger.info(len(df.columns))
+    df = df.apply(pd.to_numeric, axis = 1, errors='coerce')
+    
+    df = df.compute()
+    print(df.head(6))
+    df.to_parquet(r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\stored_data", engine='pyarrow')
  
 
 
 
 
 main_create_giga_ds(r"https://en.wikipedia.org/wiki/NASDAQ-100")
+logger.info("This works")
 
 
 

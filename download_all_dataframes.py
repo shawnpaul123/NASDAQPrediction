@@ -16,7 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 
 import pickle
-
+import logging
 
 #Improvement in pooling
 #Process took 41.73 seconds
@@ -25,13 +25,16 @@ import pickle
 '''
 Collect and store all dataframes of stocks
  '''
+LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
+logging.basicConfig(filename = r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\test_logs\download_all_dataframes.log",level = logging.DEBUG, format =LOG_FORMAT)
+logger = logging.getLogger()#root logger
 
 
 
 # Create a pool of workers equaling cores on the machine
 pool = ThreadPool() 
 
-stock_file_NASDAQ = r"https://en.wikipedia.org/wiki/NASDAQ-100"
+
 
 
 #get dictionary of all stocks
@@ -65,7 +68,7 @@ def API_download_datasets(stock_name):
 	stock = yf.Ticker(stock_name)
 	stock = stock.history(period="max")
 
-	stock.to_parquet(r"C:\Users\shawn paul\Desktop\PyFinanceProj\Stock_Data\{}.parquet".format(stock_name))
+	stock.to_parquet(r"C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\Stock_Data\{}.parquet".format(stock_name))
 	#with open(r'C:\Users\shawn paul\Desktop\PyFinanceProj\Early_dates\date_pickle_early\{}.pickle'.format(stock_name)) as ed:
 	
 

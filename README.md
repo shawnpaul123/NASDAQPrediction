@@ -1,5 +1,15 @@
 # NASDAQPrediction
-Using parallel programming and other cool swe methods to trade NASDAQ Stocks
+Y - Using parallel programming and other cool swe methods to trade NASDAQ Stocks
+Setup docker
+set up spark jobs
+Use airflow for datapipeline
+Cython and numba
+twitter extract tweets
+
+
+future:
+Use AWS for other services - sagemaker - ec2 etc.
+setup flask,redis and apache spark for parallel tasks in the future
 
 
 Goal is:

@@ -94,15 +94,39 @@ class create_and_plot_indicators:
         print(df.head(5))
     
 
-    def EDA_old_df(self):
-        #return 
-        pass
+
 
 
     def clean_missing_data(self):
         #interpolate cubically forward:https://pandas.pydata.org/pandas-docs/stable/user_guide/missing_data.html#filling-missing-values-fillna
         #return a csv that has the starting data of each column
         pass
+
+
+    def run_codes_onsingle_onseries(self, valtype):
+        if valtype == "single":
+            #read one df of stock as df
+
+        if valtype == "series":
+            #run operations on old df
+
+
+    def smote_analysis(self,df1):ecec
+        #creates balanced dataframe
+        #preferably run in pyspark later as you receive the full dataframe
+
+
+
+class pyspark_datanalysis:
+#takes in 
+
+    def __init__(self,df):
+        self.df = df
+
+
+
+
+    
 
    
 

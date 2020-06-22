@@ -23,10 +23,11 @@ class Stock_Data_Test_Args:
 
         self.NASDAQ_URL = r"https://en.wikipedia.org/wiki/NASDAQ-100"
         self.list_ticks = r'C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\Stock_Data'
+
         
 
     def get_ticker_list(self):
-        stock_pqs = os.listdir(r'C:\Users\shawn paul\Desktop\PyFinanceProj\NASDAQPrediction\Stock_Data')
+        stock_pqs = os.listdir(self.list_ticks)
         tickers = []
         for stk in stock_pqs:
             stk = stk[:-8]#remove file type
@@ -35,7 +36,7 @@ class Stock_Data_Test_Args:
 
 
 #needs a loist of stock tickers passed into this
-class create_and_plot_indicators:
+class functional_dataclean_visulaize:
 
     def __init__(self,stock):
        
@@ -96,32 +97,130 @@ class create_and_plot_indicators:
 
 
 
-
-    def clean_missing_data(self):
-        #interpolate cubically forward:https://pandas.pydata.org/pandas-docs/stable/user_guide/missing_data.html#filling-missing-values-fillna
-        #return a csv that has the starting data of each column
-        pass
-
-
-    def run_codes_onsingle_onseries(self, valtype):
+    def run_codes_single_v_series(self, valtype):
         if valtype == "single":
             #read one df of stock as df
+            pass
 
         if valtype == "series":
             #run operations on old df
+            pass
 
-
-    def smote_analysis(self,df1):ecec
-        #creates balanced dataframe
-        #preferably run in pyspark later as you receive the full dataframe
 
 
 
 class pyspark_datanalysis:
-#takes in 
+#takes in dataframe and conducts pyspark analysis on it
+
 
     def __init__(self,df):
         self.df = df
+
+
+
+
+
+class missing_data:
+
+    def __init__(self,df,df_cols,datatype,drop_cols):
+
+        self.df = df
+        self.cols = df_cols
+        self.type = datatype
+        self.drop_cols = drop_cols
+
+
+
+    def missing(self):
+
+        dff = self.df
+        df_deets =  round((dff.isnull().sum() * 100/ len(dff)),2).sort_values(ascending=False)
+        return df_deets
+
+
+
+    #returns list of column names and number of dates
+    def returns_data_stats(self):
+        #find all columns with dates and times
+        #rems both unique values
+        #returns count of unique values for each column and overlapping numbers
+
+        #str list of df columns
+        col_names = []
+        #numeric count of df items
+        col_items = []
+        #empty dataframes in a column
+
+        if self.datatype == "Numeric"
+            for col in self.cols:
+                col_names.append(col)
+                col_nums = df[col].to_numpy()
+                col_unique = np.unique(col_nums)
+                col_items.append(col_unique)
+                #get 2d array of numpy with all vals for each col
+
+
+        if self.datatype == "Date"
+            for col in self.cols:
+                col_names.append(col)
+                col_nums = list(set(df[col].tolist()))
+                col_items.append(col_nums)
+                #get 2d array of cols and respective dates
+
+        for col in self.cols:
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+
+
+
+
+
+
+
+
+
+
+        #find number 
+
+
+
+
+
+        pass
+
+
+    def visualize_data_stats(self)
+        pass
+
+    def undersampling(self):
+        pass
+
+
+    def oversampling(self):
+        pass
+
+
+    def smote(self):
+        pass
+
+
+    def smotetimeseries(self):
+        pass
+
+
 
 
 
@@ -133,19 +232,6 @@ class pyspark_datanalysis:
 
 
 
-
-def create_indicators(df1,price_col,syms):
-    df = df1
-    for sym in syms:    
-        df['ma7_'.format(sym)] = df[price_col.format(sym)].rolling(window=7).mean()
-        df['ma14_'.format(sym)] = df[price_col.format(sym)].rolling(window=14).mean()
-        df['ema_'.format(sym)] = df[price_col.format(sym)].rolling(window=7).mean()
-    return df
-
-
-#delte after use
-def get_test_stock():
-    pass
 
 stk = Stock_Data_Test_Args()
 stock_ticker = stk.get_ticker_list()

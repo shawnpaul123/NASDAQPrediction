@@ -17,12 +17,9 @@ from sklearn import preprocessing
 
 
 
-#finance related
-import cpi
-
 
 #time series related
-
+from tsfresh import extract_relevant_features
 
 #visuals related
 from bokeh.models import ColumnDataSource
@@ -93,6 +90,7 @@ class missing_data_mad_analysis:
         self.drop_cols = drop_cols
         self.threshold = 0.5 # rejects cols with 50 percent of the missing data
         self.empty_rows = 150 #removes subset if all rows have missing values
+        self.rel_col = 'C'
 
         self.chunk_size = 20#drops the n rows if there are missing vals not meeting a threshold
 
@@ -185,6 +183,9 @@ class missing_data_mad_analysis:
     def create_categories(self,df):
         #create categories based on certain values
         #one hot encode - buy sell - hold
+        #offset timed data for one stock
+        #create category of buy vs sell based on diff
+        #del original timed data
         pass
 
 
@@ -194,23 +195,13 @@ class missing_data_mad_analysis:
         pass
 
 
-    def inflate_data_frame_timeseries(self,df1):
-        #adds effect of inflation to the entire dataframe
-        df = df1
-        df['Date'] = df.index
-        df['Year'] = pd.DatetimeIndex(df['Date']).year
-
-        #iterate over all the stocks
-        for price in df.columns:
-            if (price.split('_')[0]) == 'Close':
-                df['Adjusted_'.format(price.split('_')[1])] = df.apply(lambda x: cpi.inflate(df[price], df['Year']), axis=1)
-
-        return df
-
-
     def normalize_dataframe(self,df):
+        x = df.values #returns a numpy array
+        min_max_scaler = preprocessing.MinMaxScaler()
+        x_scaled = min_max_scaler.fit_transform(x)
+        df = pd.DataFrame(x_scaled)
+        return df.info()
 
-        pass
                 
 
 
@@ -220,13 +211,24 @@ class missing_data_mad_analysis:
 
 
     def time_series_pca(self):
-        df = self.removes_cols_with_missing_blanks
+        df = self.removes_cols_with_missing_blanks()
+        #normalize,centre,number of pcs
+
+
         #https://stats.stackexchange.com/questions/293840/use-of-shuffled-dataset-for-training-and-validating-lstm-recurrent-neural-network
         #https://datascience.stackexchange.com/questions/8087/why-does-applying-pca-on-targets-causes-underfitting?rq=1
 
 
 
-        #TODO! check out the oford research on medium
+        #TODO! check out the oxord research on medium
+
+
+    def tsfresh_feature_extraction_and_removal(self,df):
+        pass
+
+
+
+
 
 stk = Stock_Data_Test_Args()
 
@@ -238,9 +240,49 @@ stock = stk.read_and_display_old_df()
 
 
 mdma = missing_data_mad_analysis(stock,None,None,None)
-df = mdma.removes_rows_with_missing_blanks()
-df = inflate_data_frame_timeseries(df)
-print(df.head(5))
+#df = mdma.removes_rows_with_missing_blanks()
+
+df = mdma.inflate_data_frame_timeseries(stock)
+print(df.columns)
+
+
+
+
+class model_create:
+
+    def __init__(self,model_name):
+        self.model_name = model_name 
+
+    def genetic_algo_tuning(self):
+        pass
+        #use GAs to tune for the best model
+
+    def create_model_lstm(self):
+        pass
+
+    def create_model_bi_lstm(self):
+        pass
+
+    def create_model_transformer(self):
+        pass
+
+
+    def compile_model(self):
+        pass
+
+
+    def visualize_results(self):
+        pass
+
+
+    def weight_prune(self):
+        pass
+
+
+    def save_best_model_with_params(self):
+        pass
+
+
 
 
 

@@ -19,13 +19,21 @@ from sklearn import preprocessing
 
 
 #time series related
-from tsfresh import extract_relevant_features
+from tsfresh import extract_features
+from tsfresh import select_features
+from tsfresh.utilities.dataframe_functions import impute
+from tsfresh.utilities.distribution import LocalDaskDistributor
+import random#for testing
+
 
 #visuals related
 from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure, show, output_file
 
-
+#stats and pca libarires
+import matplotlib.pyplot as plt
+from pandas.plotting import register_matplotlib_converters
+from sklearn.decomposition import PCA # for PCA calculation
 
 
 #have all global variables related to stock data  
@@ -81,18 +89,19 @@ class Stock_Data_Test_Args:
 #receives dataframe and inherits setting class
 class missing_data_mad_analysis:
 
-    def __init__(self,df,df_cols,datatype,drop_cols):
+    def __init__(self,df,df_cols):
 
         self.df = df
         self.column_names = df.columns
         self.cols = df_cols
-        self.type = datatype
-        self.drop_cols = drop_cols
+ 
+   
         self.threshold = 0.5 # rejects cols with 50 percent of the missing data
         self.empty_rows = 150 #removes subset if all rows have missing values
         self.rel_col = 'C'
 
         self.chunk_size = 20#drops the n rows if there are missing vals not meeting a threshold
+        super(missing_data_mad_analysis,self).__init__()
 
 
     #to be applied on combined dataset
@@ -195,63 +204,140 @@ class missing_data_mad_analysis:
         pass
 
 
+    def plot_percentage_categories(self,df):
+        pass
+
+
+
     def normalize_dataframe(self,df):
         x = df.values #returns a numpy array
         min_max_scaler = preprocessing.MinMaxScaler()
         x_scaled = min_max_scaler.fit_transform(x)
         df = pd.DataFrame(x_scaled)
-        return df.info()
+        return df
 
                 
 
 
-    def data_distribution_type(self,df):
-        #finds distribution type of data  for further analysis
+'''
+#distraction
+#predict sleep stage, entering management from technical role
+#http://veekaybee.github.io/2019/02/13/data-science-is-different/
+https://www.streamlit.io/
+'''
+
+
+#try using super with python
+class time_series_stats_analysis(missing_data_mad_analysis):
+
+    def __init__(self,df,df_columns):
+        self.decomp = True  
+        self.time_model_name = None#model_name
+        self.time_column = 'Date'#time_column
+        self.column_focus ='Id' #column_focus#columns to focus for prediciton(buy sell hold)
+        self.chunk_size=50
+        self.df = df
+        self.df_columns = df_columns
+
+        super(time_series_stats_analysis,self).__init__(self.df,self.df_columns)
+
+
+
+
+    def find_correlattion_between_vars(self,df):
         pass
 
 
-    def time_series_pca(self):
-        df = self.removes_cols_with_missing_blanks()
-        #normalize,centre,number of pcs
+    def seasonal_decomp(self,df):
+        #https://www.statsmodels.org/stable/examples/notebooks/generated/stl_decomposition.html->doesn't work
+        #https://machinelearningmastery.com/decompose-time-series-data-trend-seasonality/
+        print(df.head(8))
+        for col in df.columns:
+            res = STL(df[col],period=3).fit()
+            res.plot()
+            plt.show()
 
 
-        #https://stats.stackexchange.com/questions/293840/use-of-shuffled-dataset-for-training-and-validating-lstm-recurrent-neural-network
-        #https://datascience.stackexchange.com/questions/8087/why-does-applying-pca-on-targets-causes-underfitting?rq=1
-
-
-
-        #TODO! check out the oxord research on medium
-
-
-    def tsfresh_feature_extraction_and_removal(self,df):
+    def time_series_filters(self,df):
+        #https://www.statsmodels.org/stable/examples/notebooks/generated/tsa_filters.html
         pass
 
 
 
+    def create_timestamps_and_ids(self,df):
+        df['Date'] = df.index
+        df['Id'] = random.randrange(0,4)
+        return df
 
 
-stk = Stock_Data_Test_Args()
+    def chunk_dataframe(self,df):
+        size = self.chunk_size
+        seq = df
+  
+        for pos in range(0, len(seq), size):
+         
+            yield seq.iloc[pos:pos + size] #multiple returns
 
-#returns list of stock tickers
-stock = stk.read_and_display_old_df()
+
+        
+
+    def pca(self,df):
+        '''
+        -call preprsuper ocessing for normlaziation
+        - apply pca and keep all components
+        - find how mny compos adre needed to expalin the variacnce
+        - get list
+        '''
+        df = super(time_series_stats_analysis,self).normalize_dataframe(df)
+        print(df.head(5))
+        pca = PCA()
+        X_pca = pca.fit(df)
+        plt.plot(np.cumsum(pca.explained_variance_ratio_))
+        plt.xlabel('number of components')
+        plt.ylabel('cumulative explained variance')
+        plt.show()
+
+
+        return X_pca
+
+
+
+
+
+
+
+
+
 
 
 #(stock,df_cols,datatype,drop_cols)
 
 
-mdma = missing_data_mad_analysis(stock,None,None,None)
+#mdma = missing_data_mad_analysis(stock,None,None,None)
 #df = mdma.removes_rows_with_missing_blanks()
 
-df = mdma.inflate_data_frame_timeseries(stock)
-print(df.columns)
+
+if __name__ == '__main__':
 
 
+    stk = Stock_Data_Test_Args()
+
+    #returns list of stock tickers
+    stock = stk.read_stock()
+    tssa = time_series_stats_analysis(stock,stock.columns)
+    tsfresh = tssa.pca(stock)
+    print(stock.head(5))
+    #print(tsfresh.head(5))
 
 
 class model_create:
 
     def __init__(self,model_name):
-        self.model_name = model_name 
+        pass
+
+
+
+
 
     def genetic_algo_tuning(self):
         pass
@@ -287,13 +373,6 @@ class model_create:
 
 
 
-
-
-'''
-Knawledge:
-Groupny,join,merge etc.
-dask dataframe is useful for aggregations
-'''
 
 '''
 

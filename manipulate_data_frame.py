@@ -19,11 +19,10 @@ from sklearn import preprocessing
 
 
 #time series related
+
 from tsfresh import extract_features
-from tsfresh import select_features
 from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.utilities.distribution import LocalDaskDistributor
-import random#for testing
+import random
 
 
 #visuals related
@@ -77,37 +76,37 @@ class Stock_Data_Test_Args:
     def read_and_display_old_df(self):
         path = self.old_df_path
         df = pd.read_parquet(path,engine = 'pyarrow')
-        
-
         return df
     
 
 
+#-------------------------------------------------------------------------------------
+class setting:
 
-
+    def __init__(self):
+        pass# stores all vars for all the classes
 
 #receives dataframe and inherits setting class
 class missing_data_mad_analysis:
 
-    def __init__(self,df,df_cols):
-
-        self.df = df
-        self.column_names = df.columns
-        self.cols = df_cols
+    def __init__(self):
  
-   
         self.threshold = 0.5 # rejects cols with 50 percent of the missing data
         self.empty_rows = 150 #removes subset if all rows have missing values
         self.rel_col = 'C'
 
         self.chunk_size = 20#drops the n rows if there are missing vals not meeting a threshold
+        self.chosen_col = 'Close_ATVI' #choice fo stock
+
+        self.bar = 1#percent change for buy signal
+        self.category_colummn = ''
         super(missing_data_mad_analysis,self).__init__()
 
 
     #to be applied on combined dataset
-    def missing_data_analysis(self):        
+    def missing_data_analysis(self,df):        
 
-        df = self.df    
+           
         zero_val = (df == 0.00).astype(int).sum(axis=0)
         mis_val = df.isnull().sum()
         mis_val_percent = 100 * df.isnull().sum() / len(df)
@@ -116,8 +115,6 @@ class missing_data_mad_analysis:
         columns = {0 : 'Zero Values', 1 : 'Missing Values', 2 : '% of Total Values'})
         mz_table['Total Zero Missing Values'] = mz_table['Zero Values'] + mz_table['Missing Values']
         mz_table['% Total Zero Missing Values'] = 100 * mz_table['Total Zero Missing Values'] / len(df)
-
-   
         return mz_table
         #sample output and source ->https://stackoverflow.com/questions/37366717/pandas-print-column-name-with-missing-value
 
@@ -155,7 +152,7 @@ class missing_data_mad_analysis:
     #if the number of rows have n number missing in y rows, then remove the whole subset of 
     #the dataframe
 
-    def removes_rows_with_missing_blanks(self):
+    def removes_rows_with_missing_blanks(self,df):
 
         dataframe = self.df
         column_names = dataframe.columns
@@ -174,7 +171,7 @@ class missing_data_mad_analysis:
 
             if sum_zeros < (self.empty_rows*self.chunk_size):
 
-                df = i 
+                df = i.dropna()
 
             else:
                 #return empty datafame
@@ -188,6 +185,13 @@ class missing_data_mad_analysis:
 
         return cleaned_section_df
 
+    def col_conditions(self,df):
+        conditions = [
+            (df[self.chosen_col] >= self.bar),
+            (df[self.chosen_col] < 0.9),
+            ((df[self.chosen_col] < self.bar ) & (df[self.chosen_col] >= 0))]
+
+        return conditions
 
     def create_categories(self,df):
         #create categories based on certain values
@@ -195,7 +199,46 @@ class missing_data_mad_analysis:
         #offset timed data for one stock
         #create category of buy vs sell based on diff
         #del original timed data
-        pass
+        df_change = df.pct_change()
+        pct_cols = []
+        for col in df.columns:
+            pct_cols.append('pct_change' + col)
+
+        df_change.columns = pct_cols
+
+        df['Date'] = df.index
+        df['Date']  = pd.to_datetime(df['Date'])
+
+        df_change['Date'] = df_change.index
+        df_change['Date'] = pd.to_datetime(df_change['Date'])
+       
+
+        #changes buy,sell,hold on a single stock value
+        #df['Operation'] = df.apply(self.col_conditions(df),axis=0)
+
+        choices = [1,0,-1]
+
+        conds = self.col_conditions(df)
+
+        df['Operation'] = np.select(conds , choices, default=1)
+
+        df = df.reset_index(drop=True)
+        df = df.rename_axis(None)
+
+        df_change = df_change.reset_index(drop=True)
+        df_change = df_change.rename_axis(None)
+
+
+
+     
+
+        df_comb = pd.merge(df,df_change, left_on='Date', right_on='Date')
+
+
+        
+        return df_comb
+
+
 
 
     def combine_categories(self,df):
@@ -204,17 +247,23 @@ class missing_data_mad_analysis:
         pass
 
 
-    def plot_percentage_categories(self,df):
-        pass
+    def get_percentage_categories(self,df):
+        df[self.column_id].value_counts(normalize=True) * 100
+        retrun df
 
 
 
     def normalize_dataframe(self,df):
+
         x = df.values #returns a numpy array
         min_max_scaler = preprocessing.MinMaxScaler()
         x_scaled = min_max_scaler.fit_transform(x)
-        df = pd.DataFrame(x_scaled)
+        df2 = pd.DataFrame(x_scaled)
+        df2.columns = df.columns
+
         return df
+
+
 
                 
 
@@ -224,43 +273,25 @@ class missing_data_mad_analysis:
 #predict sleep stage, entering management from technical role
 #http://veekaybee.github.io/2019/02/13/data-science-is-different/
 https://www.streamlit.io/
+kernel and stock estimation:
+-https://towardsdatascience.com/in-12-minutes-stocks-analysis-with-pandas-and-scikit-learn-a8d8a7b50ee7
+-https://jakevdp.github.io/PythonDataScienceHandbook/05.13-kernel-density-estimation.html
 '''
+#-------------------------------------------------------------------------------------
 
-
-#try using super with python
+#base class-> will have different number of columns with tffresh extraction
 class time_series_stats_analysis(missing_data_mad_analysis):
 
-    def __init__(self,df,df_columns):
-        self.decomp = True  
+    def __init__(self):
+
         self.time_model_name = None#model_name
         self.time_column = 'Date'#time_column
         self.column_focus ='Id' #column_focus#columns to focus for prediciton(buy sell hold)
         self.chunk_size=50
-        self.df = df
-        self.df_columns = df_columns
+        self.comp_imp = 0.99
+        self.results_csv = None
 
-        super(time_series_stats_analysis,self).__init__(self.df,self.df_columns)
-
-
-
-
-    def find_correlattion_between_vars(self,df):
-        pass
-
-
-    def seasonal_decomp(self,df):
-        #https://www.statsmodels.org/stable/examples/notebooks/generated/stl_decomposition.html->doesn't work
-        #https://machinelearningmastery.com/decompose-time-series-data-trend-seasonality/
-        print(df.head(8))
-        for col in df.columns:
-            res = STL(df[col],period=3).fit()
-            res.plot()
-            plt.show()
-
-
-    def time_series_filters(self,df):
-        #https://www.statsmodels.org/stable/examples/notebooks/generated/tsa_filters.html
-        pass
+        super(time_series_stats_analysis,self).__init__()
 
 
 
@@ -269,17 +300,7 @@ class time_series_stats_analysis(missing_data_mad_analysis):
         df['Id'] = random.randrange(0,4)
         return df
 
-
-    def chunk_dataframe(self,df):
-        size = self.chunk_size
-        seq = df
-  
-        for pos in range(0, len(seq), size):
-         
-            yield seq.iloc[pos:pos + size] #multiple returns
-
-
-        
+    
 
     def pca(self,df):
         '''
@@ -288,17 +309,71 @@ class time_series_stats_analysis(missing_data_mad_analysis):
         - find how mny compos adre needed to expalin the variacnce
         - get list
         '''
+        #create next function that takes import features and keeps categories
         df = super(time_series_stats_analysis,self).normalize_dataframe(df)
-        print(df.head(5))
-        pca = PCA()
+      
+        pca = PCA(n_components = self.comp_imp)
+        #https://github.com/ansjin/blogs/blob/master/Dimensionality%20Reduction/Dimensionality%20Reduction%20using%20PCA%20on%20multivariate%20timeseries%20data.ipynb
+        #find solution of taking care of missing data
+        df = df.dropna()
         X_pca = pca.fit(df)
-        plt.plot(np.cumsum(pca.explained_variance_ratio_))
-        plt.xlabel('number of components')
-        plt.ylabel('cumulative explained variance')
-        plt.show()
+        imp_features = pd.DataFrame(pca.components_, columns = df.columns)
+        n_pcs= pca.n_components_ 
+        most_important = [np.abs(pca.components_[i]).argmax() for i in range(n_pcs)]
+        initial_feature_names = df.columns
+
+        most_important_names = [initial_feature_names[most_important[i]] for i in range(n_pcs)]
+        
+
+        #returns most importnant components list
+        return most_important_names
 
 
-        return X_pca
+
+    def tsfresh_extract(self,ts_df):
+
+        extracted_features = extract_features(ts_df.dropna(), column_id= self.time_column, n_jobs = 0) #extract all features using TSFRESH
+        print(extracted_features)
+        impute(extracted_features) #get rid of features that werent succesful (ie output = NaN or inf)
+        label_df = labels.groupby(['new_date']).first() #match the size of the labels to the size of the features
+        df = label_df.join(extracted_features) #join labels and features df
+
+        return df
+
+
+
+
+    def dump_analysis(self,df):
+        
+
+
+        #gets all related filedirs before merged step was created imported from class setting
+        #analysis of categories
+
+
+    def dump_analysis_aggregate(self):
+        pass
+        #aggregate all the dump_anaysis into one big one
+
+
+
+    def complete_analysis(self,df):
+        #remove blanks and return clean df
+        #create categories -> remove this for sleep study
+        #normalize
+        #extract features
+        #pca to relevant number of columns
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -323,50 +398,22 @@ if __name__ == '__main__':
     stk = Stock_Data_Test_Args()
 
     #returns list of stock tickers
-    stock = stk.read_stock()
-    tssa = time_series_stats_analysis(stock,stock.columns)
-    tsfresh = tssa.pca(stock)
-    print(stock.head(5))
-    #print(tsfresh.head(5))
+    stock = stk.read_and_display_old_df()   #.read_stock()
+    mdma = missing_data_mad_analysis()
+    md_create_cats = mdma.create_categories(stock)
+    print(md_create_cats)
+ 
 
-
-class model_create:
-
-    def __init__(self,model_name):
-        pass
-
+    tssa = time_series_stats_analysis()
+    df = tssa.tsfresh_extract(md_create_cats)
+    print(df.head(5))
 
 
 
-
-    def genetic_algo_tuning(self):
-        pass
-        #use GAs to tune for the best model
-
-    def create_model_lstm(self):
-        pass
-
-    def create_model_bi_lstm(self):
-        pass
-
-    def create_model_transformer(self):
-        pass
+#------------------------------------------------------------------------------------
 
 
-    def compile_model(self):
-        pass
 
-
-    def visualize_results(self):
-        pass
-
-
-    def weight_prune(self):
-        pass
-
-
-    def save_best_model_with_params(self):
-        pass
 
 
 
@@ -375,24 +422,11 @@ class model_create:
 
 
 '''
-
 #PSG ---------------> Type I polysomnography, a sleep study performed overnight while being continuously monitored by a credentialed technologist, 
                       is a comprehensive recording of the biophysiological changes that occur during sleep. 
 
 #EEG --------------->Gets electrical signals in the brain
-
-
 '''
-
-'''
-
-Resources:
-#r'https://www.sciencedirect.com/science/article/pii/S2352914820302161'
-
-
-
-'''
-
 
 
 
